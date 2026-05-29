@@ -731,9 +731,12 @@ class VersatileThermostatBaseConfigFlow(FlowHandler):
                 "type", build_step_thermostat_valve_schema(), user_input, self.async_step_menu
             )
         else:
+            schema_infos = dict(self._infos)
+            if user_input is not None:
+                schema_infos.update(user_input)
             return await self.generic_step(
                 "type",
-                STEP_THERMOSTAT_CLIMATE,
+                build_step_thermostat_climate_schema(schema_infos),
                 user_input,
                 self.async_step_menu,
             )
@@ -1240,6 +1243,22 @@ class VersatileThermostatBaseConfigFlow(FlowHandler):
                 del self._infos[CONF_CENTRAL_BOILER_DEACTIVATION_SRV]
         if not self._infos[CONF_USE_AUTO_START_STOP_FEATURE]:
             self._infos[CONF_AUTO_START_STOP_LEVEL] = AUTO_START_STOP_LEVEL_NONE
+
+        if self._infos.get(CONF_THERMOSTAT_TYPE) == CONF_THERMOSTAT_CLIMATE:
+            auto_fan_mode = self._infos.get(CONF_AUTO_FAN_MODE)
+            auto_reg_mode = self._infos.get(CONF_AUTO_REGULATION_MODE)
+            is_cascade_supported = (
+                auto_fan_mode not in (None, CONF_AUTO_FAN_NONE, CONF_AUTO_FAN_LOW)
+                and auto_reg_mode not in (None, CONF_AUTO_REGULATION_NONE)
+            )
+            if not is_cascade_supported:
+                if CONF_AUTO_FAN_CASCADE_REGULATED in self._infos:
+                    del self._infos[CONF_AUTO_FAN_CASCADE_REGULATED]
+            else:
+                if CONF_AUTO_FAN_CASCADE_REGULATED not in self._infos:
+                    self._infos[CONF_AUTO_FAN_CASCADE_REGULATED] = False
+            if CONF_AUTO_FAN_DEFAULT_SPEED not in self._infos:
+                self._infos[CONF_AUTO_FAN_DEFAULT_SPEED] = ""
 
         # Removes temporary value
         if COMES_FROM in self._infos:

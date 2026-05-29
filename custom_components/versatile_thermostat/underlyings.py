@@ -744,7 +744,7 @@ class UnderlyingClimate(UnderlyingEntity):
             new_hvac_mode = None
         if new_hvac_action == old_hvac_action:
             new_hvac_action = None
-        if new_fan_mode == self._thermostat.fan_mode:
+        if new_fan_mode == self._thermostat._fan_mode:
             new_fan_mode = None
         if under_temp_diff == 0:
             new_target_temp = None

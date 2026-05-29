@@ -111,6 +111,8 @@
                     "auto_regulation_use_device_temp": "Use internal temperature of the underlying",
                     "inverse_switch_command": "Inverse switch command",
                     "auto_fan_mode": "Auto fan mode",
+                    "auto_fan_cascade_regulated": "Cascade fan control",
+                    "auto_fan_mode_default_speed": "Auto fan default speed",
                     "on_command_text": "Turn on command customization",
                     "vswitch_on_command": "Optional turn on commands",
                     "off_command_text": "Turn off command customization",
@@ -128,6 +130,8 @@
                     "auto_regulation_use_device_temp": "Use the eventual internal temperature sensor of the underlying to speedup the self-regulation (not needed in most cases)",
                     "inverse_switch_command": "For switch with pilot wire and diode you may need to inverse the command",
                     "auto_fan_mode": "Automatically activate fan when huge heating/cooling is necessary",
+                    "auto_fan_cascade_regulated": "Vary fan speed based on PI regulator saturation (requires self-regulation enabled and auto fan mode > low; when disabled, a static 2°C threshold is used)",
+                    "auto_fan_mode_default_speed": "The default speed to restore when auto fan is deactivated (e.g. low, silent, 1). If empty, the system automatically detects the lowest speed.",
                     "on_command_text": "For underlying of type `select` or `climate` you have to customize the commands."
                 }
             },
@@ -497,6 +501,8 @@
                     "auto_regulation_use_device_temp": "Use internal temperature of the underlying",
                     "inverse_switch_command": "Inverse switch command",
                     "auto_fan_mode": "Auto fan mode",
+                    "auto_fan_cascade_regulated": "Cascade fan control",
+                    "auto_fan_mode_default_speed": "Auto fan default speed",
                     "on_command_text": "Turn on command customization",
                     "vswitch_on_command": "Optional turn on commands",
                     "off_command_text": "Turn off command customization",
@@ -514,6 +520,8 @@
                     "auto_regulation_use_device_temp": "Use the eventual internal temperature sensor of the underlying to speedup the self-regulation (not needed in most cases)",
                     "inverse_switch_command": "For switch with pilot wire and diode you may need to inverse the command",
                     "auto_fan_mode": "Automatically activate fan when huge heating/cooling is necessary",
+                    "auto_fan_cascade_regulated": "Vary fan speed based on PI regulator saturation (requires self-regulation enabled and auto fan mode > low; when disabled, a static 2°C threshold is used)",
+                    "auto_fan_mode_default_speed": "The default speed to restore when auto fan is deactivated (e.g. low, silent, 1). If empty, the system automatically detects the lowest speed.",
                     "on_command_text": "For underlying of type `select` or `climate` you have to customize the commands."
                 }
             },

@@ -225,8 +225,9 @@ STEP_CENTRAL_BOILER_SCHEMA = vol.Schema(
 
 STEP_THERMOSTAT_SWITCH = build_step_thermostat_switch_schema()  # pylint: disable=invalid-name
 
-STEP_THERMOSTAT_CLIMATE = vol.Schema(  # pylint: disable=invalid-name
-    {
+def build_step_thermostat_climate_schema(infos: dict) -> vol.Schema:
+    """Build the climate thermostat schema."""
+    schema_dict = {
         vol.Required(CONF_UNDERLYING_LIST): selector.EntitySelector(
             selector.EntitySelectorConfig(domain=CLIMATE_DOMAIN, multiple=True),
         ),
@@ -248,9 +249,17 @@ STEP_THERMOSTAT_CLIMATE = vol.Schema(  # pylint: disable=invalid-name
                 mode="dropdown",
             )
         ),
+        vol.Optional(CONF_AUTO_FAN_CASCADE_REGULATED, default=False): cv.boolean,
+        vol.Optional(CONF_AUTO_FAN_DEFAULT_SPEED, default=""): selector.TextSelector(
+            selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
+        ),
         vol.Optional(CONF_AUTO_REGULATION_USE_DEVICE_TEMP, default=False): cv.boolean,
     }
-)
+
+    return vol.Schema(schema_dict)
+
+
+STEP_THERMOSTAT_CLIMATE = build_step_thermostat_climate_schema({})  # pylint: disable=invalid-name
 
 STEP_THERMOSTAT_VALVE = build_step_thermostat_valve_schema()  # pylint: disable=invalid-name
 

@@ -63,6 +63,12 @@ class ThermostatOverClimate(BaseThermostat[UnderlyingClimate]):
         # The fan_mode name depending of the current_mode
         self._auto_activated_fan_mode: str | None = None
         self._auto_deactivated_fan_mode: str | None = None
+        self._auto_fan_default_speed: str | None = None
+        self._last_auto_fan_mode_sent: str | None = None
+        self._calculated_fan_mode: str | None = None
+        self._fan_accumulated_error: float = 0.0
+        self._last_fan_update: datetime | None = None
+        self._auto_fan_cascade_regulated: bool = False
         self._follow_underlying_temp_change: bool = False
         self._last_regulation_change = None  # NowClass.get_now(hass)
         self._sync_entity_list: list[str] = []
@@ -122,6 +128,12 @@ class ThermostatOverClimate(BaseThermostat[UnderlyingClimate]):
 
         self._auto_regulation_use_device_temp = config_entry.get(
             CONF_AUTO_REGULATION_USE_DEVICE_TEMP, False
+        )
+        self._auto_fan_cascade_regulated = config_entry.get(
+            CONF_AUTO_FAN_CASCADE_REGULATED, False
+        )
+        self._auto_fan_default_speed = config_entry.get(
+            CONF_AUTO_FAN_DEFAULT_SPEED, ""
         )
 
     @property
@@ -307,44 +319,124 @@ class ThermostatOverClimate(BaseThermostat[UnderlyingClimate]):
 
     async def _send_auto_fan_mode(self):
         """Send the fan mode if auto_fan_mode and temperature gap is > threshold"""
+        _LOGGER.info("DEBUG_AUTO_FAN: _send_auto_fan_mode starts. self._auto_fan_mode=%s, self._auto_activated_fan_mode=%s", self._auto_fan_mode, self._auto_activated_fan_mode)
         if not self._auto_fan_mode or not self._auto_activated_fan_mode:
             return
 
         dtemp = (
             self.regulated_target_temp if self.is_regulated else self.target_temperature
         )
+        _LOGGER.info("DEBUG_AUTO_FAN: dtemp=%s, self.current_temperature=%s", dtemp, self.current_temperature)
         if dtemp is None or self.current_temperature is None:
             return
 
         dtemp = dtemp - self.current_temperature
-        should_activate_auto_fan = (
-            dtemp >= AUTO_FAN_DTEMP_THRESHOLD or dtemp <= -AUTO_FAN_DTEMP_THRESHOLD
+
+        # Determine cascade mode status
+        is_cascade_active = (
+            self.is_regulated
+            and self._auto_fan_mode not in (None, CONF_AUTO_FAN_NONE, CONF_AUTO_FAN_LOW)
+            and self._auto_fan_cascade_regulated
         )
+
+        if is_cascade_active:
+            is_saturated = getattr(self._regulation_algo, "is_saturated", False)
+            should_activate_auto_fan = is_saturated
+        else:
+            should_activate_auto_fan = (
+                dtemp >= AUTO_FAN_DTEMP_THRESHOLD or dtemp <= -AUTO_FAN_DTEMP_THRESHOLD
+            )
 
         # deal with ac / non ac mode
         hvac_mode = self.vtherm_hvac_mode
         if (hvac_mode == VThermHvacMode_COOL and dtemp > 0) or (hvac_mode == VThermHvacMode_HEAT and dtemp < 0) or (hvac_mode == VThermHvacMode_OFF):
             should_activate_auto_fan = False
 
-        if should_activate_auto_fan and self.fan_mode != self._auto_activated_fan_mode:
+        # Calculate time delta for secondary error accumulation and update error
+        if is_cascade_active:
+            now = self.now
+            if getattr(self, "_last_fan_update", None) is None:
+                dt = 1.0
+            else:
+                dt = (now - self._last_fan_update).total_seconds() / 60.0
+            self._last_fan_update = now
+            if dt > 10.0:
+                dt = 1.0
+
+            fan_error = abs(dtemp)
+            if should_activate_auto_fan:
+                self._fan_accumulated_error = min(
+                    AUTO_FAN_ERROR_THRESHOLD,
+                    self._fan_accumulated_error + fan_error * dt
+                )
+            else:
+                # Decay the error if the regulator is not saturated or auto fan shouldn't activate
+                # If hvac is OFF, reset to 0 immediately to prevent delay on turn ON.
+                if hvac_mode == VThermHvacMode_OFF:
+                    self._fan_accumulated_error = 0.0
+                else:
+                    self._fan_accumulated_error = max(
+                        0.0,
+                        self._fan_accumulated_error - AUTO_FAN_DECAY_RATE * dt
+                    )
+
+            _LOGGER.info("DEBUG_AUTO_FAN: should_activate_auto_fan=%s, _fan_accumulated_error=%.2f, self.fan_mode=%s", should_activate_auto_fan, self._fan_accumulated_error, self.fan_mode)
+
+        # Filter and order the speed modes
+        fan_modes = self.fan_modes or []
+        speed_modes = [mode for mode in fan_modes if mode not in ["auto"]]
+
+        def fix_order_speed_modes(modes: list[str]) -> list[str]:
+            modes_copy = list(modes)
+            index = -1
+            if "low" in modes_copy:
+                index = modes_copy.index("low")
+            elif "1" in modes_copy:
+                index = modes_copy.index("1")
+
+            if index > -1 and index >= len(modes_copy) / 2:
+                modes_copy.reverse()
+            return modes_copy
+
+        speed_modes = fix_order_speed_modes(speed_modes)
+        num_speeds = len(speed_modes)
+        target_deactivated_mode = self._auto_fan_default_speed or self._auto_deactivated_fan_mode
+
+        if is_cascade_active:
+            is_fan_active = self._fan_accumulated_error > 0.0
+            if is_fan_active and num_speeds > 0:
+                speed_ratio = self._fan_accumulated_error / AUTO_FAN_ERROR_THRESHOLD
+                speed_index = min(num_speeds - 1, max(0, int(speed_ratio * num_speeds)))
+
+                # Cap at configured max speed
+                max_speed_mode = self._auto_activated_fan_mode
+                if max_speed_mode in speed_modes:
+                    max_speed_index = speed_modes.index(max_speed_mode)
+                    speed_index = min(speed_index, max_speed_index)
+
+                # Ensure it is at least target_deactivated_mode
+                if target_deactivated_mode in speed_modes:
+                    deact_index = speed_modes.index(target_deactivated_mode)
+                    speed_index = max(speed_index, deact_index)
+
+                target_mode = speed_modes[speed_index]
+            else:
+                target_mode = target_deactivated_mode
+        else:
+            target_mode = self._auto_activated_fan_mode if should_activate_auto_fan else target_deactivated_mode
+
+        self._calculated_fan_mode = target_mode
+        _LOGGER.info("DEBUG_AUTO_FAN: target_mode=%s", target_mode)
+        if target_mode != self.fan_mode:
             _LOGGER.info(
-                "%s - Activate the auto fan mode with %s because delta temp is %.2f",
+                "%s - Change the auto fan mode to %s (accumulated error: %.2f)",
                 self,
-                self._auto_fan_mode,
-                dtemp,
+                target_mode,
+                self._fan_accumulated_error,
             )
-            await self.async_set_fan_mode(self._auto_activated_fan_mode)
-        if (
-            not should_activate_auto_fan
-            and self.fan_mode not in AUTO_FAN_DEACTIVATED_MODES
-        ):
-            _LOGGER.info(
-                "%s - DeActivate the auto fan mode with %s because delta temp is %.2f",
-                self,
-                self._auto_deactivated_fan_mode,
-                dtemp,
-            )
-            await self.async_set_fan_mode(self._auto_deactivated_fan_mode)
+
+            self._last_auto_fan_mode_sent = target_mode
+            await self.async_set_fan_mode(target_mode)
 
     def choose_auto_regulation_mode(self, auto_regulation_mode: str):
         """Choose or change the regulation mode"""
@@ -576,6 +668,14 @@ class ThermostatOverClimate(BaseThermostat[UnderlyingClimate]):
                 self,
                 old_error,
             )
+        vtherm_over_climate_data = old_state.attributes.get("vtherm_over_climate")
+        if vtherm_over_climate_data:
+            self._fan_accumulated_error = vtherm_over_climate_data.get("fan_accumulated_error", 0.0)
+            _LOGGER.debug(
+                "%s - Restored fan_accumulated_error: %.2f",
+                self,
+                self._fan_accumulated_error,
+            )
 
     @overrides
     def update_custom_attributes(self):
@@ -588,6 +688,13 @@ class ThermostatOverClimate(BaseThermostat[UnderlyingClimate]):
         # the attr is 2 times in custom_attributes, because it need to be restored, so it must be at root
         self._attr_extra_state_attributes["regulation_accumulated_error"] = self._regulation_algo.accumulated_error
         self._attr_extra_state_attributes["regulated_target_temperature"] = self.regulated_target_temp
+        is_cascade_active = (
+            self.is_regulated
+            and self._auto_fan_mode not in (None, CONF_AUTO_FAN_NONE, CONF_AUTO_FAN_LOW)
+            and self._auto_fan_cascade_regulated
+        )
+        is_saturated = getattr(self._regulation_algo, "is_saturated", False) if self.is_regulated else False
+
         vtherm_over_climate_data = {
             "start_hvac_action_date": self._underlying_climate_start_hvac_action_date,
             "last_mean_power_cycle": self._underlying_climate_mean_power_cycle,
@@ -597,8 +704,14 @@ class ThermostatOverClimate(BaseThermostat[UnderlyingClimate]):
             "current_auto_fan_mode": self._current_auto_fan_mode,
             "auto_activated_fan_mode": self._auto_activated_fan_mode,
             "auto_deactivated_fan_mode": self._auto_deactivated_fan_mode,
+            "fan_accumulated_error": self._fan_accumulated_error,
+            "auto_fan_cascade_regulated": self._auto_fan_cascade_regulated,
+            "auto_fan_default_speed": self._auto_fan_default_speed,
             "follow_underlying_temp_change": self._follow_underlying_temp_change,
             "auto_regulation_use_device_temp": self.auto_regulation_use_device_temp,
+            "is_cascade_active": is_cascade_active,
+            "is_saturated": is_saturated,
+            "calculated_fan_mode": self._calculated_fan_mode,
         }
 
         if self.is_regulated:
@@ -795,6 +908,8 @@ class ThermostatOverClimate(BaseThermostat[UnderlyingClimate]):
         if new_fan_mode:
             self._attr_fan_mode = new_fan_mode
             changes = True
+            if new_fan_mode == getattr(self, "_last_auto_fan_mode_sent", None):
+                self._last_auto_fan_mode_sent = None
 
         # Manage new target temperature set if state if no other changes have been found
         # and if a target temperature have already been sent and if the VTherm is on

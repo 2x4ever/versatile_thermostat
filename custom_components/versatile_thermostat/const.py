@@ -123,6 +123,8 @@ CONF_AUTO_FAN_LOW = "auto_fan_low"
 CONF_AUTO_FAN_MEDIUM = "auto_fan_medium"
 CONF_AUTO_FAN_HIGH = "auto_fan_high"
 CONF_AUTO_FAN_TURBO = "auto_fan_turbo"
+CONF_AUTO_FAN_CASCADE_REGULATED = "auto_fan_cascade_regulated"
+CONF_AUTO_FAN_DEFAULT_SPEED = "auto_fan_mode_default_speed"
 CONF_STEP_TEMPERATURE = "step_temperature"
 CONF_OFFSET_CALIBRATION_LIST = "offset_calibration_entity_ids"
 CONF_OPENING_DEGREE_LIST = "opening_degree_entity_ids"
@@ -502,6 +504,8 @@ ATTR_TOTAL_ENERGY = "total_energy"
 ATTR_MEAN_POWER_CYCLE = "mean_cycle_power"
 
 AUTO_FAN_DTEMP_THRESHOLD = 2
+AUTO_FAN_ERROR_THRESHOLD = 30.0
+AUTO_FAN_DECAY_RATE = 4.0
 AUTO_FAN_DEACTIVATED_MODES = ["mute", "quiet", "low", "quiet", "1", "auto"]
 
 CENTRAL_CONFIG_NAME = "Central configuration"

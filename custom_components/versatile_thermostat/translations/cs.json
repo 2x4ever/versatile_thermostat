@@ -112,7 +112,9 @@
           "on_command_text": "Přizpůsobení příkazu zapnutí",
           "vswitch_on_command": "Volitelné příkazy zapnutí",
           "off_command_text": "Přizpůsobení příkazu vypnutí",
-          "vswitch_off_command": "Volitelné příkazy vypnutí"
+          "vswitch_off_command": "Volitelné příkazy vypnutí",
+          "auto_fan_cascade_regulated": "Kaskádová regulace ventilátoru",
+          "auto_fan_mode_default_speed": "Výchozí rychlost ventilátoru"
         },
         "data_description": {
           "underlying_entity_ids": "Zařízení, která mají být řízena - 1 je povinné",
@@ -126,7 +128,9 @@
           "auto_regulation_use_device_temp": "Použít případný vnitřní teplotní senzor podřízeného zařízení pro zrychlení samoregulace (ve většině případů není potřeba)",
           "inverse_switch_command": "Pro spínače s pilotem a diodou možná budete muset invertovat příkaz",
           "auto_fan_mode": "Automaticky aktivovat ventilátor při nutnosti velkého vytápění/chlazení",
-          "on_command_text": "Pro podřízená zařízení typu `select` nebo `climate` musíte přizpůsobit příkazy."
+          "on_command_text": "Pro podřízená zařízení typu `select` nebo `climate` musíte přizpůsobit příkazy.",
+          "auto_fan_cascade_regulated": "Mění rychlost ventilátoru na základě saturace PI regulátoru (vyžaduje aktivní autoregulaci a auto_fan > low; pokud je zakázáno, použije se statický práh 2°C)",
+          "auto_fan_mode_default_speed": "Výchozí rychlost pro obnovení, když je auto_fan deaktivován (např. low, silent, 1). Pokud je prázdné, systém automaticky detekuje nejnižší rychlost."
         }
       },
       "tpi": {
@@ -445,7 +449,9 @@
           "on_command_text": "Přizpůsobení příkazu zapnutí",
           "vswitch_on_command": "Volitelné příkazy zapnutí",
           "off_command_text": "Přizpůsobení příkazu vypnutí",
-          "vswitch_off_command": "Volitelné příkazy vypnutí"
+          "vswitch_off_command": "Volitelné příkazy vypnutí",
+          "auto_fan_cascade_regulated": "Kaskádová regulace ventilátoru",
+          "auto_fan_mode_default_speed": "Výchozí rychlost ventilátoru"
         },
         "data_description": {
           "underlying_entity_ids": "Zařízení, která mají být řízena - 1 je povinné",
@@ -459,7 +465,9 @@
           "auto_regulation_use_device_temp": "Použít případný vnitřní teplotní senzor podřízeného zařízení pro zrychlení samoregulace (ve většině případů není potřeba)",
           "inverse_switch_command": "Pro spínače s pilotem a diodou možná budete muset invertovat příkaz",
           "auto_fan_mode": "Automaticky aktivovat ventilátor při nutnosti velkého vytápění/chlazení",
-          "on_command_text": "Pro podřízená zařízení typu `select` nebo `climate` musíte přizpůsobit příkazy."
+          "on_command_text": "Pro podřízená zařízení typu `select` nebo `climate` musíte přizpůsobit příkazy.",
+          "auto_fan_cascade_regulated": "Mění rychlost ventilátoru na základě saturace PI regulátoru (vyžaduje aktivní autoregulaci a auto_fan > low; pokud je zakázáno, použije se statický práh 2°C)",
+          "auto_fan_mode_default_speed": "Výchozí rychlost pro obnovení, když je auto_fan deaktivován (např. low, silent, 1). Pokud je prázdné, systém automaticky detekuje nejnižší rychlost."
         }
       },
       "tpi": {

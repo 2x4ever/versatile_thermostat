@@ -36,6 +36,7 @@ class PITemperatureRegulator:
         self.accumulated_error: float = 0
         self.accumulated_error_threshold: float = accumulated_error_threshold
         self.overheat_protection: bool = overheat_protection
+        self.is_saturated: bool = False
 
     def reset_accumulated_error(self):
         """Reset the accumulated error"""
@@ -55,6 +56,7 @@ class PITemperatureRegulator:
 
     def calculate_regulated_temperature(self, room_temp: float | None, external_temp: float | None, time_delta: float):  # pylint: disable=unused-argument
         """Calculate a new target_temp given some temperature"""
+        self.is_saturated = False
         if room_temp is None:
             _LOGGER.warning(
                 "Temporarily skipping the self-regulation algorithm while the configured sensor for room temperature is unavailable"
@@ -105,6 +107,7 @@ class PITemperatureRegulator:
 
         # Capping of offset
         total_offset = offset + offset_ext
+        self.is_saturated = (total_offset >= self.offset_max) or (total_offset <= -self.offset_max)
         total_offset = min(self.offset_max, max(-self.offset_max, total_offset))
 
         result = round(self.target_temp + total_offset, 1)

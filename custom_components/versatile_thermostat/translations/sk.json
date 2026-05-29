@@ -115,7 +115,9 @@
           "auto_regulation_periode_min": "Regulačné minimálne obdobie",
           "auto_regulation_use_device_temp": "Použite vnútornú teplotu podkladu",
           "inverse_switch_command": "Inverzný prepínací príkaz",
-          "auto_fan_mode": "Režim automatického ventilátora"
+          "auto_fan_mode": "Režim automatického ventilátora",
+          "auto_fan_cascade_regulated": "Kaskádová regulácia ventilátora",
+          "auto_fan_mode_default_speed": "Predvolená rýchlosť ventilátora"
         },
         "data_description": {
           "heater_entity_id": "ID entity povinného ohrievača",
@@ -139,7 +141,9 @@
           "auto_regulation_periode_min": "Trvanie v minútach medzi dvoma aktualizáciami predpisov",
           "auto_regulation_use_device_temp": "Na urýchlenie samoregulácie použite prípadný vnútorný snímač teploty podkladu (vo väčšine prípadov nie je potrebné)",
           "inverse_switch_command": "V prípade spínača s pilotným vodičom a diódou možno budete musieť príkaz invertovať",
-          "auto_fan_mode": "Automaticky aktivujte ventilátor, keď je potrebné veľké vykurovanie/chladenie"
+          "auto_fan_mode": "Automaticky aktivujte ventilátor, keď je potrebné veľké vykurovanie/chladenie",
+          "auto_fan_cascade_regulated": "Menie rýchlosť ventilátora na základe saturácie PI regulátora (vyžaduje aktívnu autoreguláciu a auto_fan > low; ak je zakázané, použije sa statický prah 2°C)",
+          "auto_fan_mode_default_speed": "Predvolená rýchlosť na obnovenie, keď je auto_fan deaktivovaný (napr. low, silent, 1). Ak je prázdné, systém automaticky detekuje najnižšiu rýchlosť."
         }
       },
       "tpi": {
@@ -443,7 +447,9 @@
           "auto_regulation_periode_min": "Regulačné minimálne obdobie",
           "auto_regulation_use_device_temp": "Použite vnútornú teplotu podkladu",
           "inverse_switch_command": "Inverzný prepínací príkaz",
-          "auto_fan_mode": "Režim automatického ventilátora"
+          "auto_fan_mode": "Režim automatického ventilátora",
+          "auto_fan_cascade_regulated": "Kaskádová regulácia ventilátora",
+          "auto_fan_mode_default_speed": "Predvolená rýchlosť ventilátora"
         },
         "data_description": {
           "heater_entity_id": "ID entity povinného ohrievača",
@@ -467,7 +473,9 @@
           "auto_regulation_periode_min": "Trvanie v minútach medzi dvoma aktualizáciami predpisov",
           "auto_regulation_use_device_temp": "Na urýchlenie samoregulácie použite prípadný vnútorný snímač teploty podkladu (vo väčšine prípadov nie je potrebné)",
           "inverse_switch_command": "V prípade spínača s pilotným vodičom a diódou možno budete musieť príkaz invertovať",
-          "auto_fan_mode": "Automaticky aktivujte ventilátor, keď je potrebné veľké vykurovanie/chladenie"
+          "auto_fan_mode": "Automaticky aktivujte ventilátor, keď je potrebné veľké vykurovanie/chladenie",
+          "auto_fan_cascade_regulated": "Menie rýchlosť ventilátora na základe saturácie PI regulátora (vyžaduje aktívnu autoreguláciu a auto_fan > low; ak je zakázané, použije sa statický prah 2°C)",
+          "auto_fan_mode_default_speed": "Predvolená rýchlosť na obnovenie, keď je auto_fan deaktivovaný (napr. low, silent, 1). Ak je prázdné, systém automaticky detekuje najnižšiu rýchlosť."
         }
       },
       "tpi": {

@@ -111,7 +111,9 @@
           "on_command_text": "Dostosowanie polecenia załączenia",
           "vswitch_on_command": "Opcjonalne polecenia załączenia",
           "off_command_text": "Dostosowanie polecenia wyłączenia",
-          "vswitch_off_command": "Opcjonalne polecenia wyłączenia"
+          "vswitch_off_command": "Opcjonalne polecenia wyłączenia",
+          "auto_fan_cascade_regulated": "Kaskadowa regulacja wentylatora",
+          "auto_fan_mode_default_speed": "Domyślna prędkość wentylatora"
         },
         "data_description": {
           "underlying_entity_ids": "Sterowane urządzenia. Wybierz co najmniej jedno urządzenie",
@@ -125,7 +127,9 @@
           "auto_regulation_use_device_temp": "Użyj ewentualnego wewnętrznego czujnika temperatury urządzenia, aby przyspieszyć autoregulację (w większości przypadków nie jest to konieczne)",
           "inverse_switch_command": "W przypadku przełącznika z przewodem sterującym może być konieczne odwrócenie kolejności poleceń",
           "auto_fan_mode": "Automatycznie uruchom wentylator, gdy konieczne jest intensywne ogrzewanie/chłodzenie",
-          "on_command_text": "W przypadku typu `select` lub `climate` należy dostosować polecenia sterujące."
+          "on_command_text": "W przypadku typu `select` lub `climate` należy dostosować polecenia sterujące.",
+          "auto_fan_cascade_regulated": "Zmienia prędkość wentylatora w zależności od nasycenia regulatora PI (wymaga włączonej autoregulacji i trybu auto_fan > low; gdy wyłączone, używany jest statyczny próg 2°C)",
+          "auto_fan_mode_default_speed": "Domyślna prędkość przywracana po wyłączeniu auto_fan (np. low, silent, 1). Jeśli puste, system automatycznie wykryje najniższą prędkość."
         }
       },
       "tpi": {
@@ -454,7 +458,9 @@
           "on_command_text": "Dostosowanie polecenia załączenia",
           "vswitch_on_command": "Opcjonalne polecenia załączenia",
           "off_command_text": "Dostosowanie polecenia wyłączenia",
-          "vswitch_off_command": "Opcjonalne polecenia wyłączenia"
+          "vswitch_off_command": "Opcjonalne polecenia wyłączenia",
+          "auto_fan_cascade_regulated": "Kaskadowa regulacja wentylatora",
+          "auto_fan_mode_default_speed": "Domyślna prędkość wentylatora"
         },
         "data_description": {
           "underlying_entity_ids": "Sterowane urządzenia. Wybierz co najmniej jedno urządzenie",
@@ -468,7 +474,9 @@
           "auto_regulation_use_device_temp": "Użyj ewentualnego wewnętrznego sensora temperatury urządzenia, aby przyspieszyć autoregulację (w większości przypadków nie jest to konieczne)",
           "inverse_switch_command": "W przypadku przełącznika z przewodem sterującym może być konieczna odwrotna kolejność polecenia",
           "auto_fan_mode": "Automatycznie aktywuj wentylator, gdy konieczne jest intensywne ogrzewanie/chłodzenie",
-          "on_command_text": "W przypadku typu `select` lub `climate` należy dostosować polecenia."
+          "on_command_text": "W przypadku typu `select` lub `climate` należy dostosować polecenia.",
+          "auto_fan_cascade_regulated": "Zmienia prędkość wentylatora w zależności od nasycenia regulatora PI (wymaga włączonej autoregulacji i trybu auto_fan > low; gdy wyłączone, używany jest statyczny próg 2°C)",
+          "auto_fan_mode_default_speed": "Domyślna prędkość przywracana po wyłączeniu auto_fan (np. low, silent, 1). Jeśli puste, system automatycznie wykryje najniższą prędkość."
         }
       },
       "tpi": {

@@ -114,7 +114,9 @@
           "on_command_text": "Anpassung Einschaltbefehl",
           "vswitch_on_command": "Einschaltbefehl (optional)",
           "off_command_text": "Anpassung Ausschaltbefehl",
-          "vswitch_off_command": "Ausschaltbefehl (optional)"
+          "vswitch_off_command": "Ausschaltbefehl (optional)",
+          "auto_fan_cascade_regulated": "Kaskaden-Lüftersteuerung",
+          "auto_fan_mode_default_speed": "Standard-Lüfterdrehzahl"
         },
         "data_description": {
           "underlying_entity_ids": "Liste der von diesem VTherm gesteuerten Geräte",
@@ -128,7 +130,9 @@
           "auto_regulation_use_device_temp": "Geräteinnentemperatur ausgleichen, zur Selbstregulierungsbeschleunigung (in den meisten Fällen nicht erforderlich)",
           "inverse_switch_command": "Schaltersteuerung umkehren für Installationen mit Pilotdraht und Diode.",
           "auto_fan_mode": "Automatisch Belüftung bei großen Abweichungen",
-          "on_command_text": "Für verknüpfte Geräte des Typs `select` oder `climate` müssen die Befehle angepasst werden."
+          "on_command_text": "Für verknüpfte Geräte des Typs `select` oder `climate` müssen die Befehle angepasst werden.",
+          "auto_fan_cascade_regulated": "Variiert die Lüfterdrehzahl basierend auf der Sättigung des PI-Reglers (erfordert aktivierte Selbstregulierung und Auto-Lüftermodus > low; wenn deaktiviert, wird ein statischer Schwellenwert von 2°C verwendet)",
+          "auto_fan_mode_default_speed": "Die Standarddrehzahl, die wiederhergestellt werden soll, wenn der Auto-Lüfter deaktiviert ist (z. B. low, silent, 1). Wenn leer, erkennt das System automatisch die niedrigste Drehzahl."
         }
       },
       "tpi": {
@@ -496,7 +500,9 @@
           "on_command_text": "Anpassung der Einschaltsteuerung",
           "vswitch_on_command": "Einschaltbefehl (optional)",
           "off_command_text": "Anpassung der Abschaltsteuerung",
-          "vswitch_off_command": "Abschaltbefehl (optional)"
+          "vswitch_off_command": "Abschaltbefehl (optional)",
+          "auto_fan_cascade_regulated": "Kaskaden-Lüftersteuerung",
+          "auto_fan_mode_default_speed": "Standard-Lüfterdrehzahl"
         },
         "data_description": {
           "underlying_entity_ids": "Liste der Geräte, die von diesem VTherm kontrolliert werden",
@@ -510,7 +516,9 @@
           "auto_regulation_use_device_temp": "Ausgleich der eventuell vorhandenen Innentemperatur vom zugeordneten Gerät benutzen, zur Beschleunigung der Selbstregulierung (ist in den meisten Fällen nicht erforderlich)",
           "inverse_switch_command": "Kehrt die Schaltersteuerung bei Installationen mit Pilotdraht und Diode um.",
           "auto_fan_mode": "Aktiviert die Belüftung automatisch bei großen Abweichugnen.",
-          "on_command_text": "Für zugeordnete Geräte des Typs `select` oder `climate`."
+          "on_command_text": "Für zugeordnete Geräte des Typs `select` oder `climate`.",
+          "auto_fan_cascade_regulated": "Variiert die Lüfterdrehzahl basierend auf der Sättigung des PI-Reglers (erfordert aktivierte Selbstregulierung und Auto-Lüftermodus > low; wenn deaktiviert, wird ein statischer Schwellenwert von 2°C verwendet)",
+          "auto_fan_mode_default_speed": "Die Standarddrehzahl, die wiederhergestellt werden soll, wenn der Auto-Lüfter deaktiviert ist (z. B. low, silent, 1). Wenn leer, erkennt das System automatisch die niedrigste Drehzahl."
         }
       },
       "tpi": {

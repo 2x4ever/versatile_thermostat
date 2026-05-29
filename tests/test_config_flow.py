@@ -528,6 +528,8 @@ async def test_user_config_flow_over_climate(
         CONF_AUTO_REGULATION_MODE: CONF_AUTO_REGULATION_STRONG,
         CONF_AUTO_START_STOP_LEVEL: AUTO_START_STOP_LEVEL_NONE,
         CONF_SYNC_DEVICE_INTERNAL_TEMP: False,
+        CONF_AUTO_FAN_CASCADE_REGULATED: False,
+        CONF_AUTO_FAN_DEFAULT_SPEED: "",
     }
     assert result["result"]
     assert result["result"].domain == DOMAIN
@@ -780,6 +782,8 @@ async def test_user_config_flow_over_climate_auto_start_stop(
         CONF_AUTO_START_STOP_LEVEL: AUTO_START_STOP_LEVEL_MEDIUM,
         CONF_AUTO_REGULATION_MODE: CONF_AUTO_REGULATION_STRONG,
         CONF_SYNC_DEVICE_INTERNAL_TEMP: False,
+        CONF_AUTO_FAN_CASCADE_REGULATED: False,
+        CONF_AUTO_FAN_DEFAULT_SPEED: "",
     }
     assert result["result"]
     assert result["result"].domain == DOMAIN
@@ -1529,6 +1533,8 @@ async def test_user_config_flow_over_climate_valve(
         CONF_MAX_OPENING_DEGREES: "90",
         CONF_OPENING_THRESHOLD_DEGREE: 5,
         CONF_AUTO_START_STOP_LEVEL: AUTO_START_STOP_LEVEL_NONE,
+        CONF_AUTO_FAN_CASCADE_REGULATED: False,
+        CONF_AUTO_FAN_DEFAULT_SPEED: "",
     }
     assert result["result"]
     assert result["result"].domain == DOMAIN
@@ -1759,3 +1765,229 @@ async def test_central_config_hidden_when_exists(hass: HomeAssistant, init_vther
     assert CONF_THERMOSTAT_CENTRAL_CONFIG in available_options3
 
     hass.config_entries.flow.async_abort(result3["flow_id"])
+
+
+async def test_options_flow_cascade_regulation(
+    hass: HomeAssistant, skip_hass_states_get
+) -> None:
+    """Test that checking cascade regulation in options flow saves correctly."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="TheOverClimateMockName",
+        unique_id="uniqueId",
+        data={
+            CONF_NAME: "TheOverClimateMockName",
+            CONF_THERMOSTAT_TYPE: CONF_THERMOSTAT_CLIMATE,
+            CONF_TEMP_SENSOR: "sensor.mock_temp_sensor",
+            CONF_EXTERNAL_TEMP_SENSOR: "sensor.mock_ext_temp_sensor",
+            CONF_CYCLE_MIN: 5,
+            CONF_TEMP_MIN: 15,
+            CONF_TEMP_MAX: 30,
+            "eco_temp": 17,
+            "comfort_temp": 18,
+            "boost_temp": 19,
+            CONF_USE_WINDOW_FEATURE: False,
+            CONF_USE_MOTION_FEATURE: False,
+            CONF_USE_POWER_FEATURE: False,
+            CONF_USE_PRESENCE_FEATURE: False,
+            CONF_UNDERLYING_LIST: ["climate.mock_climate"],
+            CONF_MINIMAL_ACTIVATION_DELAY: 30,
+            CONF_MINIMAL_DEACTIVATION_DELAY: 0,
+            CONF_SAFETY_DELAY_MIN: 5,
+            CONF_SAFETY_MIN_ON_PERCENT: 0.3,
+            CONF_SAFETY_DEFAULT_ON_PERCENT: 0.1,
+            CONF_AUTO_FAN_MODE: CONF_AUTO_FAN_TURBO,
+            CONF_AUTO_REGULATION_MODE: CONF_AUTO_REGULATION_MEDIUM,
+            CONF_AUTO_FAN_CASCADE_REGULATED: False,
+        },
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] == FlowResultType.MENU
+    assert result["step_id"] == "menu"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={"next_step_id": "type"}
+    )
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "type"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_UNDERLYING_LIST: ["climate.mock_climate"],
+            CONF_AC_MODE: False,
+            CONF_AUTO_REGULATION_MODE: CONF_AUTO_REGULATION_MEDIUM,
+            CONF_AUTO_REGULATION_DTEMP: 0.5,
+            CONF_AUTO_REGULATION_PERIOD_MIN: 2,
+            CONF_AUTO_FAN_MODE: CONF_AUTO_FAN_HIGH,
+            CONF_AUTO_REGULATION_USE_DEVICE_TEMP: False,
+            CONF_AUTO_FAN_CASCADE_REGULATED: True,
+        }
+    )
+    assert result["type"] == FlowResultType.MENU
+    assert result["step_id"] == "menu"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={"next_step_id": "finalize"}
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+
+    assert entry.data[CONF_AUTO_FAN_CASCADE_REGULATED] is True
+
+
+async def test_options_flow_cascade_regulation_not_available_on_none(
+    hass: HomeAssistant, skip_hass_states_get
+) -> None:
+    """Test that cascade regulation option is not shown/available when auto regulation is none."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="TheOverClimateMockName",
+        unique_id="uniqueId2",
+        data={
+            CONF_NAME: "TheOverClimateMockName",
+            CONF_THERMOSTAT_TYPE: CONF_THERMOSTAT_CLIMATE,
+            CONF_TEMP_SENSOR: "sensor.mock_temp_sensor",
+            CONF_EXTERNAL_TEMP_SENSOR: "sensor.mock_ext_temp_sensor",
+            CONF_CYCLE_MIN: 5,
+            CONF_TEMP_MIN: 15,
+            CONF_TEMP_MAX: 30,
+            "eco_temp": 17,
+            "comfort_temp": 18,
+            "boost_temp": 19,
+            CONF_USE_WINDOW_FEATURE: False,
+            CONF_USE_MOTION_FEATURE: False,
+            CONF_USE_POWER_FEATURE: False,
+            CONF_USE_PRESENCE_FEATURE: False,
+            CONF_UNDERLYING_LIST: ["climate.mock_climate"],
+            CONF_MINIMAL_ACTIVATION_DELAY: 30,
+            CONF_MINIMAL_DEACTIVATION_DELAY: 0,
+            CONF_SAFETY_DELAY_MIN: 5,
+            CONF_SAFETY_MIN_ON_PERCENT: 0.3,
+            CONF_SAFETY_DEFAULT_ON_PERCENT: 0.1,
+            CONF_AUTO_FAN_MODE: CONF_AUTO_FAN_TURBO,
+            CONF_AUTO_REGULATION_MODE: CONF_AUTO_REGULATION_NONE,
+        },
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] == FlowResultType.MENU
+    assert result["step_id"] == "menu"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={"next_step_id": "type"}
+    )
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "type"
+
+    # The CONF_AUTO_FAN_CASCADE_REGULATED field should be in the schema because it is now always visible
+    schema_keys = [getattr(k, "schema", k) for k in result["data_schema"].schema.keys()]
+    assert CONF_AUTO_FAN_CASCADE_REGULATED in schema_keys
+
+    # Try to configure it to True
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_UNDERLYING_LIST: ["climate.mock_climate"],
+            CONF_AC_MODE: False,
+            CONF_AUTO_REGULATION_MODE: CONF_AUTO_REGULATION_NONE,
+            CONF_AUTO_REGULATION_DTEMP: 0.5,
+            CONF_AUTO_REGULATION_PERIOD_MIN: 2,
+            CONF_AUTO_FAN_MODE: CONF_AUTO_FAN_HIGH,
+            CONF_AUTO_REGULATION_USE_DEVICE_TEMP: False,
+            CONF_AUTO_FAN_CASCADE_REGULATED: True,
+        }
+    )
+    assert result["type"] == FlowResultType.MENU
+    assert result["step_id"] == "menu"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={"next_step_id": "finalize"}
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+
+    # Since auto regulation mode is none, CONF_AUTO_FAN_CASCADE_REGULATED must be cleaned up/removed on finalize
+    assert CONF_AUTO_FAN_CASCADE_REGULATED not in entry.data
+
+
+async def test_options_flow_cascade_regulation_not_available_on_low_fan_mode(
+    hass: HomeAssistant, skip_hass_states_get
+) -> None:
+    """Test that cascade regulation option is not shown/available when auto fan mode is low."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="TheOverClimateMockName",
+        unique_id="uniqueId3",
+        data={
+            CONF_NAME: "TheOverClimateMockName",
+            CONF_THERMOSTAT_TYPE: CONF_THERMOSTAT_CLIMATE,
+            CONF_TEMP_SENSOR: "sensor.mock_temp_sensor",
+            CONF_EXTERNAL_TEMP_SENSOR: "sensor.mock_ext_temp_sensor",
+            CONF_CYCLE_MIN: 5,
+            CONF_TEMP_MIN: 15,
+            CONF_TEMP_MAX: 30,
+            "eco_temp": 17,
+            "comfort_temp": 18,
+            "boost_temp": 19,
+            CONF_USE_WINDOW_FEATURE: False,
+            CONF_USE_MOTION_FEATURE: False,
+            CONF_USE_POWER_FEATURE: False,
+            CONF_USE_PRESENCE_FEATURE: False,
+            CONF_UNDERLYING_LIST: ["climate.mock_climate"],
+            CONF_MINIMAL_ACTIVATION_DELAY: 30,
+            CONF_MINIMAL_DEACTIVATION_DELAY: 0,
+            CONF_SAFETY_DELAY_MIN: 5,
+            CONF_SAFETY_MIN_ON_PERCENT: 0.3,
+            CONF_SAFETY_DEFAULT_ON_PERCENT: 0.1,
+            CONF_AUTO_FAN_MODE: CONF_AUTO_FAN_LOW,
+            CONF_AUTO_REGULATION_MODE: CONF_AUTO_REGULATION_MEDIUM,
+        },
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] == FlowResultType.MENU
+    assert result["step_id"] == "menu"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={"next_step_id": "type"}
+    )
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "type"
+
+    # The CONF_AUTO_FAN_CASCADE_REGULATED field should be in the schema because it is now always visible
+    schema_keys = [getattr(k, "schema", k) for k in result["data_schema"].schema.keys()]
+    assert CONF_AUTO_FAN_CASCADE_REGULATED in schema_keys
+
+    # Try to configure it to True
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_UNDERLYING_LIST: ["climate.mock_climate"],
+            CONF_AC_MODE: False,
+            CONF_AUTO_REGULATION_MODE: CONF_AUTO_REGULATION_MEDIUM,
+            CONF_AUTO_REGULATION_DTEMP: 0.5,
+            CONF_AUTO_REGULATION_PERIOD_MIN: 2,
+            CONF_AUTO_FAN_MODE: CONF_AUTO_FAN_LOW,
+            CONF_AUTO_REGULATION_USE_DEVICE_TEMP: False,
+            CONF_AUTO_FAN_CASCADE_REGULATED: True,
+        }
+    )
+    assert result["type"] == FlowResultType.MENU
+    assert result["step_id"] == "menu"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={"next_step_id": "finalize"}
+    )
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+
+    # Since auto fan mode is low, CONF_AUTO_FAN_CASCADE_REGULATED must be cleaned up/removed on finalize
+    assert CONF_AUTO_FAN_CASCADE_REGULATED not in entry.data
