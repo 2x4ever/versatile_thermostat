@@ -529,7 +529,7 @@ async def test_user_config_flow_over_climate(
         CONF_AUTO_START_STOP_LEVEL: AUTO_START_STOP_LEVEL_NONE,
         CONF_SYNC_DEVICE_INTERNAL_TEMP: False,
         CONF_AUTO_FAN_CASCADE_REGULATED: False,
-        CONF_AUTO_FAN_DEFAULT_SPEED: "",
+        CONF_AUTO_FAN_DEFAULT_SPEED: "Auto-Detect",
     }
     assert result["result"]
     assert result["result"].domain == DOMAIN
@@ -783,7 +783,7 @@ async def test_user_config_flow_over_climate_auto_start_stop(
         CONF_AUTO_REGULATION_MODE: CONF_AUTO_REGULATION_STRONG,
         CONF_SYNC_DEVICE_INTERNAL_TEMP: False,
         CONF_AUTO_FAN_CASCADE_REGULATED: False,
-        CONF_AUTO_FAN_DEFAULT_SPEED: "",
+        CONF_AUTO_FAN_DEFAULT_SPEED: "Auto-Detect",
     }
     assert result["result"]
     assert result["result"].domain == DOMAIN
@@ -1534,7 +1534,7 @@ async def test_user_config_flow_over_climate_valve(
         CONF_OPENING_THRESHOLD_DEGREE: 5,
         CONF_AUTO_START_STOP_LEVEL: AUTO_START_STOP_LEVEL_NONE,
         CONF_AUTO_FAN_CASCADE_REGULATED: False,
-        CONF_AUTO_FAN_DEFAULT_SPEED: "",
+        CONF_AUTO_FAN_DEFAULT_SPEED: "Auto-Detect",
     }
     assert result["result"]
     assert result["result"].domain == DOMAIN
@@ -1991,3 +1991,43 @@ async def test_options_flow_cascade_regulation_not_available_on_low_fan_mode(
 
     # Since auto fan mode is low, CONF_AUTO_FAN_CASCADE_REGULATED must be cleaned up/removed on finalize
     assert CONF_AUTO_FAN_CASCADE_REGULATED not in entry.data
+
+
+def test_dynamic_fan_modes_fetching(hass: HomeAssistant):
+    """Test that build_step_thermostat_climate_schema fetches fan modes from Hass state."""
+    import voluptuous as vol
+    from custom_components.versatile_thermostat.config_schema import build_step_thermostat_climate_schema
+    from homeassistant.helpers import selector
+
+    # Set mock climate state with custom fan modes in Hass
+    hass.states.async_set(
+        "climate.my_device",
+        "heat",
+        {"fan_modes": ["quiet", "turbo", "custom_speed"]}
+    )
+
+    # 1. When climate state exists in Hass
+    schema = build_step_thermostat_climate_schema(
+        {CONF_UNDERLYING_LIST: ["climate.my_device"]},
+        hass
+    )
+
+    # Retrieve the default speed field selector
+    default_speed_selector = schema.schema[vol.Optional(CONF_AUTO_FAN_DEFAULT_SPEED, default="Auto-Detect")]
+    assert isinstance(default_speed_selector, selector.SelectSelector)
+    assert default_speed_selector.config.get("sort") is False
+    options = default_speed_selector.config["options"]
+
+    # Options should include "Auto-Detect" + the dynamic modes from climate.my_device
+    assert options == ["Auto-Detect", "quiet", "turbo", "custom_speed"]
+
+    # 2. When climate state does NOT exist in Hass (or hass is None), falls back to smart defaults
+    schema_fallback = build_step_thermostat_climate_schema(
+        {CONF_UNDERLYING_LIST: ["climate.non_existent"]},
+        hass
+    )
+    default_speed_selector_fallback = schema_fallback.schema[vol.Optional(CONF_AUTO_FAN_DEFAULT_SPEED, default="Auto-Detect")]
+    assert default_speed_selector_fallback.config.get("sort") is False
+    options_fallback = default_speed_selector_fallback.config["options"]
+    assert "auto" in options_fallback
+    assert "low" in options_fallback

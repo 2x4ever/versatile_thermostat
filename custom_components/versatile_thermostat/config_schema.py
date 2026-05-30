@@ -2,6 +2,7 @@
 
 import voluptuous as vol
 
+from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import selector
 from homeassistant.components.switch import DOMAIN as SWITCH_DOMAIN
@@ -225,8 +226,42 @@ STEP_CENTRAL_BOILER_SCHEMA = vol.Schema(
 
 STEP_THERMOSTAT_SWITCH = build_step_thermostat_switch_schema()  # pylint: disable=invalid-name
 
-def build_step_thermostat_climate_schema(infos: dict) -> vol.Schema:
+def build_step_thermostat_climate_schema(infos: dict, hass: HomeAssistant | None = None) -> vol.Schema:
     """Build the climate thermostat schema."""
+    # 1. Determine dynamic fan modes from the selected underlying climate devices
+    fan_modes = []
+    if hass is not None and infos.get(CONF_UNDERLYING_LIST):
+        underlyings = infos[CONF_UNDERLYING_LIST]
+        # CONF_UNDERLYING_LIST could be a list of strings or a single string
+        if isinstance(underlyings, str):
+            underlyings = [underlyings]
+        
+        for entity_id in underlyings:
+            state = hass.states.get(entity_id)
+            if state is not None:
+                modes = state.attributes.get("fan_modes")
+                if isinstance(modes, list):
+                    for mode in modes:
+                        if mode not in fan_modes:
+                            fan_modes.append(mode)
+
+    # 2. If no fan modes are discovered, fall back to the smart defaults
+    if not fan_modes:
+        fan_modes = ["auto", "low", "medium", "high", "turbo", "boost", "mute", "quiet", "1", "2", "3"]
+
+    # 3. Sort options logically to prioritize standard speeds like auto, silence, quiet at the top
+    priority_modes = ["auto", "silence", "quiet", "mute", "low"]
+    original_indices = {m: i for i, m in enumerate(fan_modes)}
+    fan_modes.sort(
+        key=lambda m: (0, priority_modes.index(m.lower()))
+        if m.lower() in priority_modes
+        else (1, original_indices.get(m, 999))
+    )
+
+    # 4. Prepend 'Auto-Detect' so that automatic detection is the default option
+    if "Auto-Detect" not in fan_modes:
+        fan_modes.insert(0, "Auto-Detect")
+
     schema_dict = {
         vol.Required(CONF_UNDERLYING_LIST): selector.EntitySelector(
             selector.EntitySelectorConfig(domain=CLIMATE_DOMAIN, multiple=True),
@@ -250,8 +285,13 @@ def build_step_thermostat_climate_schema(infos: dict) -> vol.Schema:
             )
         ),
         vol.Optional(CONF_AUTO_FAN_CASCADE_REGULATED, default=False): cv.boolean,
-        vol.Optional(CONF_AUTO_FAN_DEFAULT_SPEED, default=""): selector.TextSelector(
-            selector.TextSelectorConfig(type=selector.TextSelectorType.TEXT)
+        vol.Optional(CONF_AUTO_FAN_DEFAULT_SPEED, default="Auto-Detect"): selector.SelectSelector(
+            selector.SelectSelectorConfig(
+                options=fan_modes,
+                custom_value=True,
+                mode="dropdown",
+                sort=False,
+            )
         ),
         vol.Optional(CONF_AUTO_REGULATION_USE_DEVICE_TEMP, default=False): cv.boolean,
     }

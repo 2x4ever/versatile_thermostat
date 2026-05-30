@@ -736,7 +736,7 @@ class VersatileThermostatBaseConfigFlow(FlowHandler):
                 schema_infos.update(user_input)
             return await self.generic_step(
                 "type",
-                build_step_thermostat_climate_schema(schema_infos),
+                build_step_thermostat_climate_schema(schema_infos, self.hass),
                 user_input,
                 self.async_step_menu,
             )
@@ -1258,7 +1258,7 @@ class VersatileThermostatBaseConfigFlow(FlowHandler):
                 if CONF_AUTO_FAN_CASCADE_REGULATED not in self._infos:
                     self._infos[CONF_AUTO_FAN_CASCADE_REGULATED] = False
             if CONF_AUTO_FAN_DEFAULT_SPEED not in self._infos:
-                self._infos[CONF_AUTO_FAN_DEFAULT_SPEED] = ""
+                self._infos[CONF_AUTO_FAN_DEFAULT_SPEED] = "Auto-Detect"
 
         # Removes temporary value
         if COMES_FROM in self._infos:

@@ -133,7 +133,7 @@ class ThermostatOverClimate(BaseThermostat[UnderlyingClimate]):
             CONF_AUTO_FAN_CASCADE_REGULATED, False
         )
         self._auto_fan_default_speed = config_entry.get(
-            CONF_AUTO_FAN_DEFAULT_SPEED, ""
+            CONF_AUTO_FAN_DEFAULT_SPEED, "Auto-Detect"
         )
 
     @property
@@ -400,7 +400,11 @@ class ThermostatOverClimate(BaseThermostat[UnderlyingClimate]):
 
         speed_modes = fix_order_speed_modes(speed_modes)
         num_speeds = len(speed_modes)
-        target_deactivated_mode = self._auto_fan_default_speed or self._auto_deactivated_fan_mode
+        target_deactivated_mode = (
+            self._auto_fan_default_speed
+            if self._auto_fan_default_speed and self._auto_fan_default_speed != "Auto-Detect"
+            else self._auto_deactivated_fan_mode
+        )
 
         if is_cascade_active:
             is_fan_active = self._fan_accumulated_error > 0.0
