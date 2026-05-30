@@ -288,7 +288,6 @@ def build_step_thermostat_climate_schema(infos: dict, hass: HomeAssistant | None
         vol.Optional(CONF_AUTO_FAN_DEFAULT_SPEED, default="Auto-Detect"): selector.SelectSelector(
             selector.SelectSelectorConfig(
                 options=fan_modes,
-                custom_value=True,
                 mode="dropdown",
                 sort=False,
             )
